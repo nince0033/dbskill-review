@@ -1,10 +1,28 @@
 # dbskill 审稿台
 
-双击 `index.html` 即可使用。不需要 Python、不需要服务器、不需要联网部署。
+**在线版：https://nince0033.github.io/dbskill-review/**（手机、平板、任何电脑都能开）
+
+也可以直接双击本地的 `index.html`。不需要 Python、不需要服务器。
 
 - 模型：`deepseek-v4-pro`
 - 端点：`https://api.deepseek.com/anthropic`（Anthropic 兼容格式）
 - API Key 存在浏览器 localStorage，不在本仓库任何文件里
+
+## 装到手机
+
+用手机浏览器打开上面的网址：
+
+- **iPhone（Safari）**：分享按钮 → 添加到主屏幕
+- **Android（Chrome）**：右上角菜单 → 添加到主屏幕 / 安装应用
+
+加完之后是全屏打开，没有地址栏，跟原生 app 一样。
+API Key 在手机上要单独填一次（localStorage 不跨设备同步）。
+
+### 这个仓库是公开的，安全吗
+
+安全。页面里没有任何密钥——key 是每个访问者自己填的，只存在他自己的浏览器里。
+请求由浏览器直接发往 `api.deepseek.com`，不经过 GitHub，也不经过任何中间服务器。
+提交记录用的是 GitHub noreply 邮箱，没有暴露真实邮箱。
 
 ## 流程
 
