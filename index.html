@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>dbskill 审稿台 · DeepSeek V4 Pro</title>
+<!-- 加到手机主屏后全屏打开，不显示浏览器地址栏 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="审稿台">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)">
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --panel-2:#fbfbfc; --border:#e3e5e9;
+  --text:#16181d; --text-2:#5b6270; --text-3:#8a91a0;
+  --accent:#2f6df6; --accent-soft:#eaf0ff;
+  --ok:#137a4a; --warn:#a86400; --bad:#c0342b;
+  --code-bg:#f2f3f5;
+  --shadow:0 1px 2px rgba(16,20,30,.05),0 8px 24px rgba(16,20,30,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0f1115; --panel:#171a20; --panel-2:#1c2027; --border:#2a2f39;
+    --text:#e8eaee; --text-2:#a2a9b7; --text-3:#727a89;
+    --accent:#5b8cff; --accent-soft:#1b2436;
+    --ok:#4ec98a; --warn:#e0a643; --bad:#f0736a;
+    --code-bg:#22262e;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:14px; line-height:1.7; -webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+
+/* ---------- 布局 ---------- */
+.wrap{max-width:1560px;margin:0 auto;padding:20px}
+header.top{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:0 4px 16px;
+}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand h1{font-size:17px;font-weight:650;margin:0;letter-spacing:.2px}
+.brand .sub{font-size:12px;color:var(--text-3)}
+.spacer{flex:1}
+.pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 10px;border-radius:999px;border:1px solid var(--border);
+  background:var(--panel);font-size:12px;color:var(--text-2);
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--text-3)}
+.dot.on{background:var(--ok)}
+.dot.err{background:var(--bad)}
+
+.grid{display:grid;grid-template-columns:minmax(360px,460px) 1fr;gap:20px;align-items:start}
+@media (max-width:1000px){.grid{grid-template-columns:1fr}}
+
+.card{
+  background:var(--panel);border:1px solid var(--border);border-radius:12px;
+  box-shadow:var(--shadow);
+}
+.card + .card{margin-top:16px}
+.card-hd{
+  padding:13px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;row-gap:8px;
+}
+.card-hd h2{font-size:13px;font-weight:600;margin:0;letter-spacing:.3px}
+.card-bd{padding:16px}
+
+label.fld{display:block;margin-bottom:14px}
+label.fld:last-child{margin-bottom:0}
+label.fld > span.lb{
+  display:block;font-size:12px;color:var(--text-2);margin-bottom:6px;font-weight:500;
+}
+input[type=text],input[type=password],select,textarea{
+  width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;
+  background:var(--panel-2);outline:none;transition:border-color .15s,box-shadow .15s;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);
+}
+textarea#draft{min-height:340px;resize:vertical;line-height:1.75;font-size:14px}
+.hint{font-size:11.5px;color:var(--text-3);margin-top:6px;line-height:1.6}
+
+.row{display:flex;gap:10px}
+.row > *{flex:1}
+
+/* ---------- 维度勾选 ---------- */
+.modes{display:flex;flex-direction:column;gap:8px}
+.mode{
+  display:flex;gap:11px;align-items:flex-start;
+  padding:10px 12px;border:1px solid var(--border);border-radius:9px;
+  background:var(--panel-2);cursor:pointer;transition:border-color .15s,background .15s;
+}
+.mode:hover{border-color:var(--text-3)}
+.mode.sel{border-color:var(--accent);background:var(--accent-soft)}
+.mode input{margin:4px 0 0;accent-color:var(--accent);flex:none;width:15px;height:15px;cursor:pointer}
+.mode .mt{font-weight:600;font-size:13px}
+.mode .md{font-size:11.5px;color:var(--text-2);margin-top:2px}
+.mode .src{font-size:11px;color:var(--text-3);font-family:ui-monospace,Menlo,Consolas,monospace}
+
+/* ---------- 按钮 ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px 16px;border-radius:9px;border:1px solid var(--border);
+  background:var(--panel-2);cursor:pointer;font-weight:550;font-size:13px;
+  transition:background .15s,border-color .15s,opacity .15s;
+  flex:none;white-space:nowrap;
+}
+.btn:hover:not(:disabled){border-color:var(--text-3)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover:not(:disabled){filter:brightness(1.08)}
+.btn.sm{padding:6px 11px;font-size:12px;border-radius:7px;font-weight:500}
+.btn.danger{color:var(--bad)}
+.actions{display:flex;gap:10px;margin-top:16px}
+.actions .btn{flex:1}
+
+/* ---------- 报告 ---------- */
+#reports{display:flex;flex-direction:column;gap:16px}
+.empty{
+  border:1px dashed var(--border);border-radius:12px;padding:56px 24px;
+  text-align:center;color:var(--text-3);font-size:13px;line-height:2;
+}
+.rep-hd{
+  padding:12px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;
+}
+.rep-hd h3{margin:0;font-size:13.5px;font-weight:650;flex:1}
+.badge{
+  font-size:11px;padding:2px 8px;border-radius:999px;
+  border:1px solid var(--border);color:var(--text-2);background:var(--panel-2);
+  font-weight:500;white-space:nowrap;
+}
+.badge.run{color:var(--accent);border-color:var(--accent)}
+.badge.done{color:var(--ok);border-color:var(--ok)}
+.badge.fail{color:var(--bad);border-color:var(--bad)}
+.chev{color:var(--text-3);transition:transform .2s;flex:none}
+.rep.collapsed .chev{transform:rotate(-90deg)}
+.rep.collapsed .rep-bd{display:none}
+.rep-bd{padding:4px 20px 20px}
+
+details.think{
+  margin:12px 0;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);
+}
+details.think summary{padding:8px 12px;cursor:pointer;font-size:12px;color:var(--text-2)}
+details.think .tk{padding:0 12px 12px;font-size:12.5px;color:var(--text-2);white-space:pre-wrap}
+
+.err-box{
+  margin:12px 0;padding:12px 14px;border-radius:8px;
+  border:1px solid var(--bad);color:var(--bad);background:var(--panel-2);
+  font-size:12.5px;white-space:pre-wrap;word-break:break-word;
+}
+
+/* ---------- markdown ---------- */
+.md-body{font-size:14px;line-height:1.8;word-wrap:break-word}
+.md-body h1{font-size:19px;margin:22px 0 12px;font-weight:650;letter-spacing:.2px}
+.md-body h2{font-size:16px;margin:22px 0 10px;font-weight:650;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.md-body h3{font-size:14.5px;margin:18px 0 8px;font-weight:650}
+.md-body h4{font-size:13.5px;margin:16px 0 6px;font-weight:600;color:var(--text-2)}
+.md-body p{margin:10px 0}
+.md-body ul,.md-body ol{margin:10px 0;padding-left:22px}
+.md-body li{margin:4px 0}
+.md-body blockquote{
+  margin:12px 0;padding:9px 14px;border-left:3px solid var(--accent);
+  background:var(--panel-2);border-radius:0 7px 7px 0;color:var(--text-2);
+}
+.md-body blockquote p{margin:4px 0}
+.md-body code{
+  background:var(--code-bg);padding:1.5px 5px;border-radius:4px;font-size:12.5px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+.md-body pre{
+  background:var(--code-bg);padding:12px 14px;border-radius:8px;
+  overflow-x:auto;margin:12px 0;
+}
+.md-body pre code{background:none;padding:0;font-size:12.5px;line-height:1.6}
+.md-body hr{border:0;border-top:1px solid var(--border);margin:20px 0}
+.md-body del{color:var(--bad);opacity:.72;text-decoration-thickness:1.5px}
+.md-body strong{font-weight:650}
+.md-body ins{
+  text-decoration:none;background:rgba(19,122,74,.12);
+  border-bottom:1.5px solid var(--ok);padding:0 2px;border-radius:2px;
+}
+@media (prefers-color-scheme:dark){.md-body ins{background:rgba(78,201,138,.15)}}
+.tbl-wrap{overflow-x:auto;margin:12px 0}
+.md-body table{border-collapse:collapse;width:100%;font-size:13px}
+.md-body th,.md-body td{border:1px solid var(--border);padding:7px 11px;text-align:left;vertical-align:top}
+.md-body th{background:var(--panel-2);font-weight:600}
+.cursor{
+  display:inline-block;width:7px;height:15px;background:var(--accent);
+  vertical-align:-2px;animation:bl .9s steps(2,start) infinite;
+}
+@keyframes bl{to{visibility:hidden}}
+
+/* ---------- 手机 ---------- */
+@media (max-width:640px){
+  .wrap{padding:12px}
+  header.top{padding:0 2px 12px;gap:8px}
+  .brand h1{font-size:16px}
+  .brand .sub{display:none}
+  /* iOS 上输入控件字号小于 16px，聚焦时会强行放大整个页面 */
+  input[type=text],input[type=password],select,textarea{font-size:16px}
+  textarea#draft{min-height:200px;font-size:16px}  /* id 选择器，必须在这里重申字号才压得过上面那条 */
+  .card-bd{padding:14px}
+  .row{flex-direction:column;gap:0}
+  .btn{padding:11px 14px}          /* 触摸目标够大 */
+  .btn.sm{padding:9px 12px;font-size:13px}
+  .rep-bd{padding:4px 14px 16px}
+  .actions{position:sticky;bottom:12px}
+  .md-body table{font-size:12.5px}
+  .md-body th,.md-body td{padding:6px 8px}
+}
+.toast{
+  position:fixed;left:50%;bottom:28px;transform:translateX(-50%);
+  background:var(--text);color:var(--bg);padding:9px 18px;border-radius:999px;
+  font-size:13px;box-shadow:var(--shadow);opacity:0;pointer-events:none;
+  transition:opacity .2s,transform .2s;z-index:99;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="brand">
+    <h1>dbskill 审稿台</h1>
+    <span class="sub">DeepSeek V4 Pro · 6 个审稿维度</span>
+  </div>
+  <div class="spacer"></div>
+  <span class="pill"><span class="dot" id="keyDot"></span><span id="keyTxt">未填 API Key</span></span>
+  <span class="pill" id="modelPill">deepseek-v4-pro</span>
+</header>
+
+<div class="grid">
+
+  <!-- ============ 左：输入 ============ -->
+  <div>
+
+    <div class="card">
+      <div class="card-hd"><h2>连接设置</h2></div>
+      <div class="card-bd">
+        <label class="fld">
+          <span class="lb">DeepSeek API Key</span>
+          <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off" spellcheck="false">
+          <div class="hint">只存在这台电脑的浏览器里（localStorage），不写进代码、不上传任何第三方。请求直接发往 api.deepseek.com。</div>
+        </label>
+        <div class="row">
+          <label class="fld">
+            <span class="lb">模型</span>
+            <input type="text" id="model" value="deepseek-v4-pro" spellcheck="false">
+          </label>
+          <label class="fld">
+            <span class="lb">Base URL</span>
+            <input type="text" id="baseUrl" value="https://api.deepseek.com/anthropic" spellcheck="false">
+          </label>
+        </div>
+        <label class="fld" style="display:flex;align-items:center;gap:8px;margin-bottom:0">
+          <input type="checkbox" id="thinking" style="width:auto;accent-color:var(--accent)">
+          <span class="lb" style="margin:0">开启深度思考（更慢，诊断更细）</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd"><h2>稿件</h2><div class="spacer"></div>
+        <span class="badge" id="charCount">0 字</span>
+      </div>
+      <div class="card-bd">
+        <label class="fld">
+          <span class="lb">把稿子粘进来</span>
+          <textarea id="draft" placeholder="粘贴你的逐字稿 / 公众号长文 / 推文…"></textarea>
+        </label>
+        <div class="row">
+          <label class="fld">
+            <span class="lb">体裁（影响判定阈值）</span>
+            <select id="genre">
+              <option value="短视频逐字稿">短视频逐字稿</option>
+              <option value="公众号长文">公众号长文</option>
+              <option value="推文 / 社交媒体短文">推文 / 社交媒体</option>
+              <option value="小红书图文">小红书图文</option>
+              <option value="长视频 / 播客口播稿">长视频 / 播客口播</option>
+              <option value="学术或正式文体">学术 / 正式文体</option>
+            </select>
+          </label>
+          <label class="fld">
+            <span class="lb">拍摄方式（短视频用）</span>
+            <select id="shootType">
+              <option value="未说明">未说明</option>
+              <option value="纯口播">纯口播</option>
+              <option value="白板视频">白板视频</option>
+              <option value="不适用（非视频）">不适用</option>
+            </select>
+          </label>
+        </div>
+        <label class="fld" style="margin-bottom:0">
+          <span class="lb">补充背景（可选）</span>
+          <input type="text" id="context" placeholder="目标受众、发布平台、这条想达成什么…">
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd"><h2>审稿维度</h2><div class="spacer"></div>
+        <button class="btn sm" id="selAll">全选</button>
+        <button class="btn sm" id="selNone">全不选</button>
+      </div>
+      <div class="card-bd">
+        <div class="modes" id="modes"></div>
+        <div class="actions">
+          <button class="btn primary" id="run">开始审稿</button>
+          <button class="btn danger" id="stop" style="display:none">停止</button>
+        </div>
+        <div class="hint" id="runHint" style="margin-top:10px">
+          勾选的维度会各自独立调一次 DeepSeek，边生成边显示。
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ 右：报告 ============ -->
+  <div>
+    <div class="card" id="repToolbar" style="display:none">
+      <div class="card-hd">
+        <h2>审稿报告</h2>
+        <div class="spacer"></div>
+        <button class="btn sm" id="summarize">综合结论</button>
+        <select id="rewriteScope" class="btn sm" style="width:auto;padding-right:6px;cursor:pointer" title="改稿范围">
+          <option value="must">只改必改</option>
+          <option value="all">全部都改</option>
+        </select>
+        <button class="btn sm primary" id="rewrite">改稿</button>
+        <button class="btn sm" id="copyMd">复制 MD</button>
+        <button class="btn sm" id="dlHtml">导出 HTML</button>
+        <button class="btn sm" id="clearAll">清空</button>
+      </div>
+    </div>
+    <div id="reports">
+      <div class="empty" id="empty">
+        左边粘上稿子，勾维度，点「开始审稿」。<br>
+        审稿标准取自本机 dbskill 的 6 个 skill，不是通用文案点评。
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= dbskill 审稿维度 ================= */
+/* 每条 system prompt 由本机 ~/.claude/skills/dbs-* 的 SKILL.md 抽取而成 */
+
+var COMMON_TAIL = [
+  '',
+  '## 通用输出纪律',
+  '',
+  '1. 每一条结论都必须引用稿件原文。禁止「整体感觉…」「建议加强…」这类空话。',
+  '2. 不讨好用户。有问题就说有，没问题就直说没问题，不要为了凑报告硬找。',
+  '3. 给行动不给建议。写「第 3 段这句改成 X」，不写「可以考虑优化一下」。',
+  '4. 你自己的措辞不许犯 AI 味：不用「你可能会觉得」开头，不用高密度「不是 X 是 Y」，不用「本质上」「归根结底」升维收尾，不写「你值得」式祝福结尾。',
+  '5. 用中文回复，遵循《中文文案排版指北》（中英文之间加空格）。',
+  '6. 直接输出报告正文，不要写开场白、不要复述任务、不要在结尾追问用户。'
+].join('\n');
+
+var MODES = [
+  {
+    id:'ai',
+    name:'AI 味检测',
+    src:'dbs-ai-check',
+    desc:'扫 22 个 AI 写作指纹，逐处引用原文',
+    on:true,
+    system: [
+      '你是 dontbesilent 的 AI 写作特征检测工具（dbs-ai-check）。任务是帮作者看清自己的文字里有哪些 AI 生成痕迹。',
+      '',
+      '## 立场',
+      '你反对「去 AI 味」。识别 AI 特征是帮人看清自己的文字，不是帮人伪装成人类。如果你像任何一个人，你就不像 AI。',
+      '本次只做识别，不改稿。',
+      '',
+      '## 三条原则',
+      '1. AI 味的本质是「太完美」。问题不是写得差，是写得太光滑、太均匀，没有毛边、没有卡顿、没有一处是作者自己也没想通的。',
+      '2. 去 AI 味 ≠ 好内容。关心有没有 AI 味的人很多，关心好不好的人很少。',
+      '3. 不搞清作者意图之前，不改任何一个字。',
+      '',
+      '## 22 个特征',
+      '1 堵住所有反驳｜2 知识全部输出（术语数据堆砌）｜3 匀速排比｜4 同一让步模板反复用｜5 给概念起名字的仪式｜6 情绪曲线太光滑｜7 替读者说一句蠢话然后纠正｜8「不是 X 是 Y」高密度｜9 没有任何犹豫｜10 精确到不真实的情绪细节（1.7 秒这类）｜11 脆弱感服务于论点｜12 把结论包装成「协议」｜13 每个段落都有收束金句｜14 句子节奏过于均匀｜15 用身体感受替代论证｜16 开头「钩子+痛点+承诺」三件套｜17 连接词过度使用且位置固定（然而/事实上/值得注意的是）｜18 同义词刻意替换｜19 中文翻译腔（作为/关于/基于/进行）｜20 虚假的「讲个故事」｜21 结尾「你值得」式祝福｜22 对「深刻」的过拟合（本质上/归根结底 + 升维）',
+      '',
+      '## 严重度',
+      '🔴 强信号（几乎只有 AI 会这样做）｜⚠️ 中信号（AI 高频但人也可能做）｜💡 弱信号（要结合体裁判断）',
+      '',
+      '## 误伤警告（不许机械判定）',
+      '- 特征 8「不是 X 是 Y」：800 字内出现 3 次以上才算。低密度是正常修辞，鲁迅、李敖、罗翔都用。',
+      '- 特征 7 替读者说蠢话：这是经典修辞 prolepsis，只有当虚构的读者声音明显被矮化时才算。',
+      '- 特征 13 段段金句：只适用于公众号长文。短视频逐字稿段段金句是体裁要求，不判定。',
+      '- 特征 1 堵住反驳：只适用于自媒体/社交媒体。学术与法律论证穷尽反驳是规范，不判定。',
+      '- 特征 5 命名仪式：同一篇出现 2 次以上同一句式才算，偶尔一次是正常修辞。',
+      '- 特征 14 句子节奏：推文本身就短，推文体裁不判定。',
+      '- 特征 2 知识全部输出：学术/正式文体不判定。',
+      '',
+      '## 输出格式',
+      '开头一行：**命中 X 处 AI 指纹**，并注明你判断的体裁。',
+      '然后按文本顺序逐处展示（不按特征归类），每一处：',
+      '',
+      '**第 N 处**',
+      '> 直接引用原文中命中的那段话',
+      '',
+      '用一两句话说清楚这段话的问题是什么，具体、直接、不堆术语。',
+      '末行用行内代码写：特征 #N 特征名 严重度',
+      '',
+      '全部列完后给 **总结**：一两句话概括最突出的问题，不罗列。',
+      '如果整体没什么 AI 味，直接说没什么问题，不要硬找。',
+      COMMON_TAIL
+    ].join('\n')
+  },
+  {
+    id:'resonate',
+    name:'共鸣诊断',
+    src:'dbs-resonate',
+    desc:'核心机制有没有被稀释 + 五维传播心理',
+    on:true,
+    system: [
+      '你是文稿共鸣诊断 AI（dbs-resonate）。作者写完了一段内容但心里没底，你要用传播心理学框架诊断它有没有引起共鸣的结构。',
+      '',
+      '## 只做这些',
+      '做：诊断传播心理上是否有效；找出「写得很全面但没有刺中核心」这个最常见的问题；给出具体删改建议。',
+      '不做：预测完播率点击率这类算法数字；检查结构完整性；分析已验证内容为什么能火。',
+      '',
+      '## 三条信条',
+      '1. 全面不等于专业，精准才等于专业。一段内容只能有一个核心机制。说了六件事等于什么都没说清楚。',
+      '2. 共鸣是结构问题不是运气。结构对了平淡的语言也能打中人，结构错了再漂亮的表达也没用。',
+      '3. 先找核心再看执行。很多时候问题不是「说得不好」，是「同时在说太多件事」。',
+      '',
+      '## 工作流程（核心机制审查不许跳过）',
+      'Step 1 提取稿件中所有被明确或隐含提出的主张，只列举不评价。',
+      'Step 2 找核心机制：如果只能保留一件事，保留哪件？找不到清晰核心就直接标记「核心不明确」，这本身就是最大的问题。',
+      'Step 3 五维度诊断，每维给 有效 / 弱 / 无效 加一句具体说明，必须关联到稿件的具体文字：',
+      '① 沉默解除（沉默的螺旋，诺依曼 1974）：有没有说出受众憋着不敢说的话？',
+      '② 满足动机（使用与满足，卡茨 1959）：受众看完/分享，满足的是什么心理需求？',
+      '③ 立场框架（框架理论，恩特曼 1993）：内容站在谁那边？受众有没有感到被代言？',
+      '④ 传播入口（两级传播，拉扎斯菲尔德 1944）：谁会第一个传？他的动机是什么？',
+      '⑤ 信念结构（认知一致性，费斯廷格 1957）：确认了受众哪个信念？有没有触发行动冲动？',
+      '',
+      '## 四种常见病',
+      '模式 1 核心被稀释：列了 3-6 个观点各说各的 → 找出唯一有爆发力的那个，其余删掉或压成服务材料。',
+      '模式 2 机制说了但没说清：有结论没有「因为…所以」 → 补上那一句，机制只需要一句话。',
+      '模式 3 立场漂移：开头站服务者、中间变建议者、结尾变教育者 → 从头到尾只站一边。',
+      '模式 4 沉默解除弱：内容正确但平淡，看完只会「嗯有道理」 → 找出受众私下不能公开说的那句判断，说出来。',
+      '',
+      '## 输出格式（用 markdown）',
+      '# 🔍 文稿共鸣诊断',
+      '**核心问题一句话：**…',
+      '## 核心机制审查',
+      '列出稿件中所有主张（编号列表）→ 真正的核心是哪一个（一句话说清机制）→ 判断依据 → 当前状态（核心明确 / 核心被稀释 / 核心不明确）→ 具体说明有几件事在互相干扰。',
+      '## 五维度诊断',
+      '用表格：维度 | 判断 | 说明（说明必须引用原文）',
+      '## 具体改法',
+      '分四栏写：删掉 / 缩短为支撑细节 / 强化 / 保持不动。每条都要点到具体句子。',
+      '最后写一句「改完之后的骨架应该是：…」，让作者知道方向对不对。这一句不许省略。',
+      '',
+      '改法要具体到文字。不写「加强情感共鸣」，要写「第三段的『所以高端是场景化的状态』这句单独成行放大，其余删掉」。',
+      COMMON_TAIL
+    ].join('\n')
+  },
+  {
+    id:'flow',
+    name:'逻辑延续',
+    src:'dbs-script-flow',
+    desc:'观众会在哪一秒划走：衔接 / 密度 / 口播',
+    on:true,
+    system: [
+      '你是逐字稿逻辑延续检查工具（dbs-script-flow v1.1）。任务是找出「观众会在哪一秒划走」的风险点。',
+      '',
+      '## 核心原则',
+      '完播率的敌人不是内容差，而是某一个瞬间观众跟不上了。观众划走只有三个原因：逻辑断裂、信息密度掉了、口播卡壳。',
+      '',
+      '## 检查流程',
+      '第一步 分段：按话题切换点分段，给每段标注段号、主题（一句话）、功能（开场/背景铺垫/论证/案例/转场/高潮/结尾）。',
+      '第二步 逐段扫三个维度：',
+      '维度 1 逻辑衔接（段与段之间）：上段最后一句和下段第一句之间有没有跳跃？观众能不能自然理解为什么要讲这一段？缺的那个承上启下的信息是什么？常见病：从个案跳宏观缺过渡、前一个话题没收束就换题、从数据跳观点缺一句「所以」。修法：加一句过渡、在前段末尾加收束、调段落顺序。',
+      '维度 2 信息密度（段落内部）：有没有重复前面说过的？有没有用 5 句话说一句话就能说清的事？删掉这段观众会不会 miss 关键信息？常见病：同一个意思换三种说法、例子举过头、「正确的废话」。',
+      '维度 3 口播流畅度（句子级）：这句能一口气念出来吗（超过 30 字的单句要警惕）？有没有书面语（针对/鉴于/基于以上分析）？有没有连续自问自答？有没有生造术语且没即时解释？常见病：定语套定语、术语不解释、长短句节奏太碎或太闷。',
+      '第三步 标风险等级：🔴 高风险（观众大概率在这里划走：逻辑断裂、密度严重下降）｜🟡 中风险（可能走神）｜🟢 小建议（改了更好）。',
+      '',
+      '## 输出格式（markdown）',
+      '## 段落结构',
+      '表格：段号 | 主题 | 功能 | 状态（✅/🟡/🔴）',
+      '## 问题清单',
+      '每个问题写成：**🔴 问题 N：第 X 段 → 第 Y 段，逻辑断裂**，下面用引用块贴原文，然后写「**问题**：为什么这里观众会跟不上」，再写「**修复建议**：」并用引用块给出可以直接念出来的具体句子。',
+      '## 整体评估',
+      '逻辑衔接 / 信息密度 / 口播流畅度各一句话总结，最后一句总判断：需要改几处，改完能不能发。',
+      '',
+      '## 硬约束',
+      '1. 不改内容观点。这个维度只管「怎么说」，不管「说什么」。不许改论点、案例、数据。',
+      '2. 修复建议必须口语化，能直接念出来，不许是书面语。',
+      '3. 稿子整体很顺就说「没什么问题」，不要强行找茬。',
+      '4. 宁可漏一个小建议，也不要把高风险问题淹没在一堆小问题里。',
+      '5. 改写要保持作者自己的说话风格，不要改出 AI 味。',
+      '6. 如果是白板视频：并列清单是视觉优势、「划重点啊」「看这里」是配合板上动作的提示词，都不该改。',
+      '7. 判断「跑题」之前先问：删掉这段，观众在前一个关键节点能不能靠自己脑补出具体含义？脑补不出来，这段就是必要的论证肉，不是赘肉。看这段在服务哪个论点，不要只看话题字面偏不偏。',
+      COMMON_TAIL
+    ].join('\n')
+  },
+  {
+    id:'content',
+    name:'内容五维',
+    src:'dbs-content',
+    desc:'文字洁癖 / 标题 / 表达效率 / 认知落差',
+    on:true,
+    system: [
+      '你是 dontbesilent 的内容创作诊断 AI（dbs-content）。你不帮人写内容，你帮人诊断内容该怎么做。',
+      '',
+      '## 五条原则',
+      '1. 文字洁癖是底线。AI 写的内容被限流不是 AI 的问题，是用 AI 的人对文字没有洁癖。英雄不问出处，内容好不好和是不是 AI 写的无关。',
+      '2. 自媒体的本质是精神控制。封面和标题的本质是认知劫持，特定文字排列会触发特定神经机制。',
+      '3. 内容好坏 = 投入精力 × 对内容有正确理解。投入精力 ≠ 内容好。新手越应该推高成本做内容，否则进入「内容差 → 没流量 → 以量取胜 → 内容更差」的死亡螺旋。',
+      '4. 先有产品后有内容。内容是为产品服务的，不是为了自嗨。',
+      '5. 知识博主的核心工作只有两个：把事情搞清楚，把事情说清楚。',
+      '',
+      '## 五维诊断（每维给 ✅ 干净/高效/有落差 · ⚠️ 需优化 · ❌ 需重做，并说出具体问题句）',
+      '维度 1 文字洁癖：有没有 AI 味（Emoji 堆叠、晦涩词汇、空洞排比）？有没有「干货」陷阱？语言是不是公共的、可验证的？',
+      '维度 2 封面/标题：平铺直叙能不能吸引人（不能就是价值密度不够）？标题的情绪是什么，是信息传递还是认知劫持？',
+      '维度 3 表达效率：能不能一句话说清核心观点？有没有用 99% 的时间包装 1% 的内容？是在服务变现还是自嗨？',
+      '维度 4 认知落差：同行把这事讲清楚了吗？你比同行好在哪？受众看完会不会觉得「这个我知道」？',
+      '维度 5 AI 辅助建议：按内容类型给具体工作流。观点类=长思考快输出，想明白了直接开机拍不写稿；分析类=提取素材→deep search→改写成文稿→露脸拍；工具类=AI 生成清单人工筛排；文风类=拆解自身文风输出语言风格解构报告。',
+      '',
+      '## 输出格式（markdown）',
+      '# 内容创作诊断报告：{一句话概括这篇讲什么}',
+      '## 推荐形式',
+      '内容形式 / 推荐平台 / 理由各一行。平台判断依据：小红书=内容平台，涨粉靠内容质量；抖音=内容电商，变现靠投流；X=文字平台，适合观点和 thread；公众号=深度长文。',
+      '## 五维诊断',
+      '表格：维度 | 判断 | 具体问题（必须引用稿件原文）',
+      '## 如果要做，第一步是什么',
+      '一个具体的行动，不是建议。',
+      '## 一句话',
+      '犀利的总结。',
+      '',
+      '## 遇到就直说',
+      '- 作者在纠结标题 →「99% 时间应该花在做值得讲的事上，标题只需要 1%。你在纠结的是那 1%。」',
+      '- 稿子是「干货合集」→「所有让你讲干货的博主都是不专业的。你要做的是把事情搞清楚，然后说清楚。」',
+      '- 稿子看不出背后有产品 →「先有产品后有内容。你的付款链接在哪？」',
+      '',
+      '绝对不做：不帮作者写内容（你是诊断者不是代笔）；不说「这个也行那个也行」；不建议「多看看同行怎么做」；不讨论「什么内容容易火」。',
+      COMMON_TAIL
+    ].join('\n')
+  },
+  {
+    id:'hook',
+    name:'开头诊断',
+    src:'dbs-hook',
+    desc:'独立性 / Hook / 悬念 / 可信度 + 备选开头',
+    on:true,
+    system: [
+      '你是 dontbesilent 的开头优化 AI（dbs-hook）。',
+      '',
+      '## 核心信念',
+      '写不出好开头，90% 是因为内容本身有问题。开头是内容的试用装，如果内容没有价值、没有素材、没有冲击力，再怎么优化开头也没用。',
+      '',
+      '## 四条信条',
+      '1. 开头是内容的试用装，不是标题的延续。不能假设观众看了标题和封面，开头必须在 5 秒内独立建立吸引力。',
+      '2. 好开头 = 话题（讲什么）+ Hook（为什么看）+ 可信度（为什么信你）。范例：「我去年涨粉 200 万，靠的就是搞清楚选题和标题的区别」。',
+      '3. 开头要制造悬念，不要直接给答案。错误：「李亚鹏 30 年干黄十几个项目，证明人脉不等于赚钱」（说了答案）。正确：「善良的李亚鹏，认识半个娱乐圈，30 年为什么赚不到钱」（留悬念）。',
+      '4. 开头必须口播友好。错误：「你以为你在自律？其实你只是在逃避执行」（自问自答念不出口）。正确：「只要你没在执行，你的动作大概率就是为了逃避执行而生的动作」。',
+      '',
+      '## 第一步：先诊断内容质量（关键，不许跳过）',
+      '素材丰富度扫描，五个维度各自判断有没有：① 有冲击力的数据（大数字、对比数字、百分比）② 转变故事（之前 vs 之后，反差越大越好）③ 金句（能独立成立、可传播）④ 权威背书（人物或机构）⑤ 痛点共鸣（目标人群的焦虑、常见错误做法）。',
+      '五个都没有 → 停止优化，直接说：「你的内容没有素材，写不出好开头。先回去补充数据、故事、金句、权威或痛点。」',
+      '只有 1-2 个 → 照做但明确警告效果有限。',
+      '3 个以上 → 正常往下做。',
+      '正文少于 200 字 → 警告撑不起一个好开头。正文全是废话 → 停止优化。',
+      '话题范围：不是这个领域的人会看吗？有没有缩窄人群的词？太窄就警告流量上限低。',
+      '',
+      '## 第二步：诊断当前开头',
+      '六个维度逐项判断并说明问题：独立性（不看标题能理解吗）｜Hook（前 5 秒有抓手吗，还是平铺直叙）｜悬念（是不是开头就说了结论）｜可信度（为什么听你讲）｜口播友好（能直接念出来吗，有没有自问自答/书面语/抽象概念）｜匹配度（开头承诺的正文能不能兑现）。',
+      '最后点出最严重的 1-2 个核心问题。',
+      '',
+      '## 第三步：生成备选开头',
+      '只有通过第一步的素材检查才做这一步。从稿件里提取现有素材写 8-12 条备选开头，每条标注用了哪个素材、走的是哪种 Hook（数据 / 反差 / 悬念 / 痛点 / 权威 / 转变故事）。每条都必须能直接念出来。',
+      '',
+      '## 输出格式（markdown）',
+      '## 内容质量前置检查（素材五维表格 + 结论：可优化 / 效果有限 / 停止优化）',
+      '## 当前开头诊断（六维表格 + 核心问题）',
+      '## 备选开头（编号列表，每条后面用括号标 Hook 类型和素材来源）',
+      '## 一句话决断',
+      COMMON_TAIL
+    ].join('\n')
+  },
+  {
+    id:'spread',
+    name:'传播解码',
+    src:'dbs-spread',
+    desc:'用 5 个经典传播学理论解码情绪底层',
+    on:false,
+    system: [
+      '你是传播心理解码工具（dbs-spread）。给定一段内容，用 5 个经典传播学理论解码它为什么能（或不能）引起受众共鸣。',
+      '',
+      '## 四条信条',
+      '1. 共鸣是结构性的，不是运气。受众为什么愿意听某条内容，在内容被写出来的那一刻就由心理结构决定了。',
+      '2. 理论溯源，不自由发挥。每个判断都必须能追溯到具体理论，不许用「感觉」「直觉」「经验」替代理论依据。',
+      '3. 情绪优先于信息。受众愿意听的不是「正确的信息」，而是「说出他们情绪的内容」。从情绪入手，不从信息量入手。',
+      '4. 立场决定接受度。同一个观点站在不同立场说出来，接受度天壤之别。找到有效立场比找到正确答案更重要。',
+      '',
+      '## 五个理论（均为 1980 年前已被学术验证）',
+      '沉默的螺旋（诺依曼 1974）：受众憋着什么情绪没法公开说？这条内容有没有替他说出来？',
+      '使用与满足（卡茨 1959）：满足的是什么心理需求？身份认同 / 情绪宣泄 / 社交资本 / 信息价值。',
+      '框架理论（恩特曼 1993）：内容用什么框架切入？为什么让受众愿意接受而不是防御？',
+      '两级传播（拉扎斯菲尔德 1944）：谁是第一批传播者？动机是什么？这告诉我们受众还想听什么。',
+      '认知一致性（费斯廷格 1957）：内容和受众已有信念是什么关系？有效结构是「确认受众已有信念，同时挑战他们的某个具体行为」。',
+      '',
+      '自检规则：写每个判断时问自己「这个判断的依据是理论机制，还是我的感觉？」是感觉就重写。',
+      '',
+      '## 输出格式（markdown）',
+      '# 📡 传播心理解码',
+      '## 五个维度分析',
+      '每个维度独立小节，按理论名列出该理论要求回答的字段，每个字段一句话，都要关联到稿件的具体文本。',
+      '## 综合推导',
+      '受众情绪底层（一到两句）／有效立场（内容站哪个立场、从哪个角度切入使受众愿意接受）／受众还想听什么（同一情绪频道上还有哪些内容方向有共鸣空间，给 3-5 个具体方向）。',
+      COMMON_TAIL
+    ].join('\n')
+  }
+];
+
+var SUMMARY_SYSTEM = [
+  '你是 dbskill 的总编。下面是同一篇稿件在多个审稿维度下各自出的报告。你的工作是把它们合成一份可执行的决断，不是复述。',
+  '',
+  '## 输出格式（markdown）',
+  '## 一句话结论',
+  '这稿能不能发。三选一：可以发 / 改完能发 / 需要重做。后面跟一句话理由。',
+  '## 必须改（不改就别发）',
+  '编号列表，每条写清楚：改哪里（引用原文片段）、改成什么、这条是哪个维度提出来的。最多 5 条，按严重度排。',
+  '## 可以改（改了更好）',
+  '同样格式，最多 5 条。',
+  '## 不用改的',
+  '哪些地方几个维度都认可，明确保留，别在下一版里改掉。',
+  '## 维度之间的冲突',
+  '如果不同维度给了互相矛盾的建议，指出来，并说你站哪边、为什么。没有冲突就写「无」。',
+  '',
+  '## 纪律',
+  '不要重复各维度报告里已经写过的分析过程，只给决断和动作。每条都要能直接执行。用中文，中英文之间加空格。'
+].join('\n');
+
+var REWRITE_SYSTEM = [
+  '你是 dbskill 的改稿编辑。作者已经拿到了多个维度的审稿报告，现在要你按报告在原文上改。',
+  '',
+  '## 最高原则：永不抹除作者原文',
+  '改稿是在原文上叠加标记，不是用新版本替换旧版本。作者必须能一眼看出：哪些是他自己写的、哪些是你建议删的、哪些是你新增的。',
+  '禁止在底部另写一个完整的新版本。所有改动都在原文位置上原地标记。',
+  '',
+  '## 三种标记符',
+  '- 用 ~~两个波浪号~~ 包住建议删除或被替换的原文',
+  '- 用 🆕 开头标记新增或改写后的内容',
+  '- 用 ⚠️ 标记你自己撤回的判断、还原原文（多轮改稿时用）',
+  '',
+  '## 改稿规则',
+  '1. 每个改动成对出现：被删的原文紧跟着 🆕 新版本，让对照关系一目了然。',
+  '2. 整段删除时：保留原段落打删除线。如果有压缩版替代，用 🆕 写在下面；如果就是纯删除没有替代，什么都不要写，删除理由放到后面的改动清单表格里。',
+  '   🆕 后面只能跟「属于定稿的正文」。绝对不要写 🆕（此处已删）、🆕（这段重复，删掉）这类说明性文字——它们会被当成正文带进定稿。所有说明一律进改动清单。',
+  '3. 没有改动的段落原样照抄，不要省略、不要写「（此处不变）」。作者要的是一份完整可读的稿子。',
+  '4. 改写必须保持作者自己的说话风格和语气，不要改出 AI 味。',
+  '5. 修复句必须口语化，能直接念出来，不许是书面语。',
+  '',
+  '## 硬边界：只改「怎么说」，不改「说什么」',
+  '不许改作者的论点、案例、数据、结论。',
+  '不许替作者补充他没说过的事实、数字、人名、经历。',
+  '如果审稿报告指出的是「选题有问题」「核心不明确」这类内容层面的问题，你不要自己编内容去补，在改动清单里单独列一条写明「这条需要作者自己决定，我没动」。',
+  '',
+  '## 输出结构',
+  '第一部分：改完的全文（原文 + 原地标记）。',
+  '第二部分，标题写「## 改动清单」，用表格：位置 | 类型 | 说明。类型用 🔴 整块删除 / 🟡 新增 / 🟢 替换。',
+  '第三部分，标题写「## 决断」，一句话说明哪几处一定要改、哪几处改不改都行，给作者优先级。',
+  '',
+  '## 纪律',
+  '不写开场白，不复述任务，直接从改完的全文开始。用中文，中英文之间加空格。'
+].join('\n');
+
+/* ================= 极简 markdown 渲染 ================= */
+function esc(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function inline(s){
+  s = esc(s);
+  s = s.replace(/`([^`\n]+)`/g, function(m,a){return '<code>'+a+'</code>';});
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+  s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+  return s;
+}
+function renderMd(src){
+  var lines = String(src).replace(/\r/g,'').split('\n');
+  var out = [], i = 0;
+  var FENCE = '```';
+  function flushPara(buf){
+    if(buf.length){ out.push('<p>'+inline(buf.join(' '))+'</p>'); buf.length = 0; }
+  }
+  var para = [];
+  while(i < lines.length){
+    var ln = lines[i];
+
+    if(ln.trim().indexOf(FENCE) === 0){
+      flushPara(para);
+      var code = [], lang = ln.trim().slice(3).trim();
+      i++;
+      while(i < lines.length && lines[i].trim().indexOf(FENCE) !== 0){ code.push(lines[i]); i++; }
+      i++;
+      out.push('<pre><code data-lang="'+esc(lang)+'">'+esc(code.join('\n'))+'</code></pre>');
+      continue;
+    }
+
+    if(/^\s{0,3}(-{3,}|\*{3,}|_{3,})\s*$/.test(ln)){
+      flushPara(para); out.push('<hr>'); i++; continue;
+    }
+
+    var h = ln.match(/^\s{0,3}(#{1,6})\s+(.*)$/);
+    if(h){
+      flushPara(para);
+      var lv = Math.min(h[1].length,4);
+      out.push('<h'+lv+'>'+inline(h[2].trim())+'</h'+lv+'>');
+      i++; continue;
+    }
+
+    // 表格
+    if(ln.indexOf('|') !== -1 && i+1 < lines.length && /^\s*\|?[\s:\-|]+\|[\s:\-|]*$/.test(lines[i+1]) && lines[i+1].indexOf('-') !== -1){
+      flushPara(para);
+      var cells = function(r){
+        var t = r.trim().replace(/^\|/,'').replace(/\|$/,'');
+        return t.split('|').map(function(c){return c.trim();});
+      };
+      var head = cells(ln); i += 2;
+      var body = [];
+      while(i < lines.length && lines[i].indexOf('|') !== -1 && lines[i].trim() !== ''){ body.push(cells(lines[i])); i++; }
+      var t = '<div class="tbl-wrap"><table><thead><tr>';
+      head.forEach(function(c){ t += '<th>'+inline(c)+'</th>'; });
+      t += '</tr></thead><tbody>';
+      body.forEach(function(r){
+        t += '<tr>';
+        for(var k=0;k<head.length;k++){ t += '<td>'+inline(r[k]||'')+'</td>'; }
+        t += '</tr>';
+      });
+      out.push(t + '</tbody></table></div>');
+      continue;
+    }
+
+    if(/^\s{0,3}>\s?/.test(ln)){
+      flushPara(para);
+      var q = [];
+      while(i < lines.length && /^\s{0,3}>\s?/.test(lines[i])){ q.push(lines[i].replace(/^\s{0,3}>\s?/,'')); i++; }
+      out.push('<blockquote>'+renderMd(q.join('\n'))+'</blockquote>');
+      continue;
+    }
+
+    if(/^\s*([-*+]\s+|\d+[.)]\s+)/.test(ln)){
+      flushPara(para);
+      var ordered = /^\s*\d+[.)]\s+/.test(ln);
+      var items = [];
+      while(i < lines.length && /^\s*([-*+]\s+|\d+[.)]\s+)/.test(lines[i])){
+        items.push(lines[i].replace(/^\s*([-*+]\s+|\d+[.)]\s+)/,''));
+        i++;
+        while(i < lines.length && /^\s{2,}\S/.test(lines[i]) && !/^\s*([-*+]\s+|\d+[.)]\s+)/.test(lines[i])){
+          items[items.length-1] += ' ' + lines[i].trim(); i++;
+        }
+      }
+      var tag = ordered ? 'ol' : 'ul';
+      out.push('<'+tag+'>'+items.map(function(x){return '<li>'+inline(x)+'</li>';}).join('')+'</'+tag+'>');
+      continue;
+    }
+
+    if(ln.trim() === ''){ flushPara(para); i++; continue; }
+
+    para.push(ln.trim());
+    i++;
+  }
+  flushPara(para);
+  return out.join('\n');
+}
+
+/* ================= DOM ================= */
+var $ = function(id){ return document.getElementById(id); };
+var state = { running:false, abort:null, results:{} };
+
+function toast(msg){
+  var t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(function(){ t.classList.remove('show'); }, 1900);
+}
+
+/* 复制纯文本。Windows 下统一成 CRLF，粘进记事本 / Word / 剪映不会挤成一行。 */
+function copyText(str, okMsg){
+  var txt = String(str).replace(/\r\n/g,'\n').replace(/\n/g,'\r\n');
+  function fallback(){
+    var ta = document.createElement('textarea');
+    ta.value = txt;
+    ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try{ ok = document.execCommand('copy'); }catch(e){}
+    document.body.removeChild(ta);
+    toast(ok ? (okMsg || '已复制') : '复制失败，请手动选中复制');
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){ toast(okMsg || '已复制'); }, fallback);
+  }else{ fallback(); }
+}
+
+function downloadTxt(str, filename){
+  var txt = String(str).replace(/\r\n/g,'\n').replace(/\n/g,'\r\n');
+  // 带 BOM，老一点的 Windows 工具才认得出这是 UTF-8 中文
+  var blob = new Blob(['﻿' + txt], { type:'text/plain;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+  toast('已下载 ' + filename);
+}
+
+function hdBtn(hd, label, fn){
+  var b = document.createElement('button');
+  b.className = 'btn sm';
+  b.textContent = label;
+  b.addEventListener('click', function(e){ e.stopPropagation(); fn(); });
+  hd.appendChild(b);
+  return b;
+}
+
+/* --- 设置持久化 --- */
+var STORE = 'dbskill-review-v1';
+function saveCfg(){
+  try{
+    localStorage.setItem(STORE, JSON.stringify({
+      key: $('apiKey').value,
+      model: $('model').value,
+      baseUrl: $('baseUrl').value,
+      thinking: $('thinking').checked,
+      genre: $('genre').value,
+      shootType: $('shootType').value,
+      modes: MODES.filter(function(m){return m.on;}).map(function(m){return m.id;})
+    }));
+  }catch(e){}
+}
+function loadCfg(){
+  try{
+    var c = JSON.parse(localStorage.getItem(STORE) || '{}');
+    if(c.key) $('apiKey').value = c.key;
+    if(c.model) $('model').value = c.model;
+    if(c.baseUrl) $('baseUrl').value = c.baseUrl;
+    if(typeof c.thinking === 'boolean') $('thinking').checked = c.thinking;
+    if(c.genre) $('genre').value = c.genre;
+    if(c.shootType) $('shootType').value = c.shootType;
+    if(Array.isArray(c.modes) && c.modes.length){
+      MODES.forEach(function(m){ m.on = c.modes.indexOf(m.id) !== -1; });
+    }
+  }catch(e){}
+}
+
+function refreshKeyPill(){
+  var k = $('apiKey').value.trim();
+  $('keyDot').className = 'dot' + (k ? ' on' : '');
+  $('keyTxt').textContent = k ? ('API Key 已填 · ' + k.slice(0,6) + '…' + k.slice(-4)) : '未填 API Key';
+  $('modelPill').textContent = $('model').value.trim() || '(未填模型)';
+}
+
+/* --- 维度列表 --- */
+function renderModes(){
+  var box = $('modes'); box.innerHTML = '';
+  MODES.forEach(function(m){
+    var el = document.createElement('label');
+    el.className = 'mode' + (m.on ? ' sel' : '');
+    el.innerHTML =
+      '<input type="checkbox"' + (m.on ? ' checked' : '') + '>' +
+      '<div><div class="mt">' + m.name + ' <span class="src">' + m.src + '</span></div>' +
+      '<div class="md">' + m.desc + '</div></div>';
+    var cb = el.querySelector('input');
+    cb.addEventListener('change', function(){
+      m.on = cb.checked; el.classList.toggle('sel', m.on); saveCfg(); updateRunHint();
+    });
+    box.appendChild(el);
+  });
+  updateRunHint();
+}
+function updateRunHint(){
+  var n = MODES.filter(function(m){return m.on;}).length;
+  $('runHint').textContent = n === 0
+    ? '至少勾一个维度。'
+    : '已勾 ' + n + ' 个维度，会依次调用 ' + n + ' 次 DeepSeek，边生成边显示。';
+  $('run').disabled = (n === 0) || state.running;
+}
+
+/* --- 报告卡片 --- */
+function makeCard(mode){
+  var card = document.createElement('div');
+  card.className = 'card rep';
+  card.dataset.mode = mode.id;
+  card.innerHTML =
+    '<div class="rep-hd">' +
+      '<svg class="chev" width="12" height="12" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+      '<h3>' + mode.name + '</h3>' +
+      '<span class="badge">' + mode.src + '</span>' +
+      '<span class="badge run status">排队中</span>' +
+    '</div>' +
+    '<div class="rep-bd"><div class="md-body body"></div></div>';
+  card.querySelector('.rep-hd').addEventListener('click', function(e){
+    if(e.target.tagName === 'BUTTON') return;
+    card.classList.toggle('collapsed');
+  });
+  return card;
+}
+
+/* ================= API ================= */
+function callDeepSeek(system, user, onText, onThink, signal){
+  var base = $('baseUrl').value.trim().replace(/\/+$/,'');
+  var body = {
+    model: $('model').value.trim(),
+    max_tokens: 8000,
+    system: system,
+    messages: [{ role:'user', content:[{ type:'text', text:user }] }],
+    stream: true
+  };
+  if($('thinking').checked){
+    body.thinking = { type:'enabled', budget_tokens: 4000 };
+    body.temperature = 1;
+  }else{
+    body.temperature = 0.6;
+  }
+
+  return fetch(base + '/v1/messages', {
+    method:'POST',
+    headers:{
+      'content-type':'application/json',
+      'x-api-key': $('apiKey').value.trim(),
+      'anthropic-version':'2023-06-01'
+    },
+    body: JSON.stringify(body),
+    signal: signal
+  }).then(function(res){
+    if(!res.ok){
+      return res.text().then(function(t){
+        var msg = 'HTTP ' + res.status;
+        try{ var j = JSON.parse(t); if(j.error && j.error.message) msg += ' · ' + j.error.message; }
+        catch(e){ if(t) msg += ' · ' + t.slice(0,300); }
+        if(res.status === 401) msg += '\n\nAPI Key 不对，或者没有权限调这个模型。';
+        if(res.status === 404) msg += '\n\n模型名或 Base URL 不对。注意：传了不支持的模型名，DeepSeek 会静默降级到 deepseek-v4-flash。';
+        if(res.status === 402) msg += '\n\n账户余额不足。';
+        if(res.status === 429) msg += '\n\n触发限速，等一会儿再试。';
+        throw new Error(msg);
+      });
+    }
+    var reader = res.body.getReader();
+    var dec = new TextDecoder('utf-8');
+    var buf = '';
+    function pump(){
+      return reader.read().then(function(r){
+        if(r.done) return;
+        buf += dec.decode(r.value, { stream:true });
+        var parts = buf.split('\n');
+        buf = parts.pop();
+        parts.forEach(function(line){
+          line = line.trim();
+          if(line.indexOf('data:') !== 0) return;
+          var payload = line.slice(5).trim();
+          if(!payload || payload === '[DONE]') return;
+          var ev;
+          try{ ev = JSON.parse(payload); }catch(e){ return; }
+          if(ev.type === 'content_block_delta' && ev.delta){
+            if(ev.delta.type === 'text_delta' && ev.delta.text) onText(ev.delta.text);
+            else if(ev.delta.type === 'thinking_delta' && ev.delta.thinking) onThink(ev.delta.thinking);
+          }else if(ev.type === 'error'){
+            throw new Error((ev.error && ev.error.message) || '服务端返回 error 事件');
+          }
+        });
+        return pump();
+      });
+    }
+    return pump();
+  });
+}
+
+function buildUserMsg(){
+  var parts = [];
+  parts.push('【体裁】' + $('genre').value);
+  var st = $('shootType').value;
+  if(st !== '未说明' && st !== '不适用（非视频）') parts.push('【拍摄方式】' + st);
+  var ctx = $('context').value.trim();
+  if(ctx) parts.push('【背景】' + ctx);
+  parts.push('');
+  parts.push('【稿件全文开始】');
+  parts.push($('draft').value.trim());
+  parts.push('【稿件全文结束】');
+  parts.push('');
+  parts.push('按你的输出格式审这篇稿。');
+  return parts.join('\n');
+}
+
+/* ================= 主流程 ================= */
+function run(){
+  var key = $('apiKey').value.trim();
+  if(!key){ toast('先填 API Key'); $('apiKey').focus(); return; }
+  var draft = $('draft').value.trim();
+  if(draft.length < 30){ toast('稿子太短了，至少 30 字'); $('draft').focus(); return; }
+  var picked = MODES.filter(function(m){ return m.on; });
+  if(!picked.length){ toast('至少勾一个维度'); return; }
+
+  saveCfg();
+  state.running = true; state.results = {};
+  state.abort = new AbortController();
+  $('run').disabled = true; $('stop').style.display = '';
+  $('empty').style.display = 'none';
+  $('repToolbar').style.display = '';
+  $('reports').innerHTML = '';
+
+  var cards = {};
+  picked.forEach(function(m){
+    var c = makeCard(m); cards[m.id] = c; $('reports').appendChild(c);
+  });
+
+  var user = buildUserMsg();
+  var chain = Promise.resolve();
+
+  picked.forEach(function(m){
+    chain = chain.then(function(){
+      if(state.abort.signal.aborted) return;
+      var card = cards[m.id];
+      var status = card.querySelector('.status');
+      var body = card.querySelector('.body');
+      status.textContent = '生成中'; status.className = 'badge run status';
+
+      var acc = '', thinkAcc = '';
+      var thinkEl = null;
+      body.innerHTML = '<span class="cursor"></span>';
+
+      function paint(){
+        body.innerHTML = renderMd(acc) + '<span class="cursor"></span>';
+      }
+      var raf = null;
+      function schedule(){
+        if(raf) return;
+        raf = requestAnimationFrame(function(){ raf = null; paint(); });
+      }
+
+      return callDeepSeek(m.system, user,
+        function(t){ acc += t; schedule(); },
+        function(t){
+          thinkAcc += t;
+          if(!thinkEl){
+            thinkEl = document.createElement('details');
+            thinkEl.className = 'think';
+            thinkEl.innerHTML = '<summary>思考过程</summary><div class="tk"></div>';
+            card.querySelector('.rep-bd').insertBefore(thinkEl, body);
+          }
+          thinkEl.querySelector('.tk').textContent = thinkAcc;
+        },
+        state.abort.signal
+      ).then(function(){
+        if(raf){ cancelAnimationFrame(raf); raf = null; }
+        body.innerHTML = renderMd(acc);
+        state.results[m.id] = { name:m.name, src:m.src, text:acc };
+        status.textContent = '完成'; status.className = 'badge done status';
+      }).catch(function(err){
+        if(raf){ cancelAnimationFrame(raf); raf = null; }
+        if(err && err.name === 'AbortError'){
+          body.innerHTML = renderMd(acc);
+          status.textContent = '已停止'; status.className = 'badge status';
+          return;
+        }
+        body.innerHTML = renderMd(acc) +
+          '<div class="err-box">' + esc(String(err && err.message || err)) + '</div>';
+        status.textContent = '失败'; status.className = 'badge fail status';
+      });
+    });
+  });
+
+  chain.then(function(){
+    state.running = false;
+    $('stop').style.display = 'none';
+    updateRunHint();
+    if(!state.abort.signal.aborted) toast('审稿完成');
+  });
+}
+
+function summarize(){
+  var done = Object.keys(state.results);
+  if(done.length < 2){ toast('至少要有 2 个维度跑完才有得合'); return; }
+  var old = document.querySelector('.rep[data-mode="__sum"]');
+  if(old) old.remove();
+
+  var card = makeCard({ id:'__sum', name:'综合结论', src:'总编' });
+  $('reports').insertBefore(card, $('reports').firstChild);
+  var status = card.querySelector('.status');
+  var body = card.querySelector('.body');
+  status.textContent = '生成中'; status.className = 'badge run status';
+
+  var msg = ['【稿件全文】', $('draft').value.trim(), '', '【各维度审稿报告】'];
+  done.forEach(function(id){
+    var r = state.results[id];
+    msg.push('', '#### 维度：' + r.name + '（' + r.src + '）', r.text);
+  });
+  msg.push('', '把上面这些合成一份决断。');
+
+  var acc = '';
+  state.abort = new AbortController();
+  body.innerHTML = '<span class="cursor"></span>';
+  callDeepSeek(SUMMARY_SYSTEM, msg.join('\n'),
+    function(t){ acc += t; body.innerHTML = renderMd(acc) + '<span class="cursor"></span>'; },
+    function(){},
+    state.abort.signal
+  ).then(function(){
+    body.innerHTML = renderMd(acc);
+    state.results['__sum'] = { name:'综合结论', src:'总编', text:acc };
+    status.textContent = '完成'; status.className = 'badge done status';
+  }).catch(function(err){
+    body.innerHTML = renderMd(acc) + '<div class="err-box">' + esc(String(err && err.message || err)) + '</div>';
+    status.textContent = '失败'; status.className = 'badge fail status';
+  });
+}
+
+/* ---------- 标记式改稿 ---------- */
+function rewrite(){
+  var done = Object.keys(state.results).filter(function(id){ return id !== '__rw'; });
+  if(!done.length){ toast('先跑一次审稿，改稿要基于审稿报告'); return; }
+  if(!$('apiKey').value.trim()){ toast('先填 API Key'); return; }
+
+  var old = document.querySelector('.rep[data-mode="__rw"]');
+  if(old) old.remove();
+
+  var scope = $('rewriteScope').value;
+  var card = makeCard({ id:'__rw', name:'标记式改稿', src:'dbs-script-flow' });
+  $('reports').insertBefore(card, $('reports').firstChild);
+
+  var hd = card.querySelector('.rep-hd');
+  // 一键去标记复制成纯文本，不用先生成干净版
+  var txtBtn = hdBtn(hd, '复制 TXT', function(){
+    var r = state.results['__rw'];
+    if(!r || !r.text){ toast('还没有改稿结果'); return; }
+    var clean = stripMarks(r.text);
+    if(!clean){ toast('没能从改稿结果里提取出正文'); return; }
+    copyText(clean, '定稿已复制为纯文本（' + clean.length + ' 字）');
+  });
+  txtBtn.disabled = true;
+  var dlBtn = hdBtn(hd, '下载 .txt', function(){
+    var r = state.results['__rw'];
+    if(!r || !r.text) return;
+    var clean = stripMarks(r.text);
+    if(!clean){ toast('没能提取出正文'); return; }
+    downloadTxt(clean, '定稿-' + new Date().toISOString().slice(0,10) + '.txt');
+  });
+  dlBtn.disabled = true;
+  var cleanBtn = hdBtn(hd, '生成干净版', showClean);
+  cleanBtn.disabled = true;
+
+  var status = card.querySelector('.status');
+  var body = card.querySelector('.body');
+  status.textContent = '改稿中'; status.className = 'badge run status';
+
+  var msg = ['【原稿】', $('draft').value.trim(), '', '【审稿报告】'];
+  done.forEach(function(id){
+    var r = state.results[id];
+    msg.push('', '#### ' + r.name + '（' + r.src + '）', r.text);
+  });
+  msg.push('', scope === 'must'
+    ? '改稿范围：只改报告里判定为必须改 / 高风险（🔴）的部分。中低风险和「改了更好」的建议一律不动，保留作者原文。'
+    : '改稿范围：报告里提到的所有问题都改，包括小建议（🟢）。');
+  msg.push('按你的输出结构改这篇稿。');
+
+  var acc = '';
+  state.abort = new AbortController();
+  body.innerHTML = '<span class="cursor"></span>';
+  var raf = null;
+  function schedule(){
+    if(raf) return;
+    raf = requestAnimationFrame(function(){ raf = null; body.innerHTML = renderMd(acc) + '<span class="cursor"></span>'; });
+  }
+
+  callDeepSeek(REWRITE_SYSTEM, msg.join('\n'),
+    function(t){ acc += t; schedule(); },
+    function(){},
+    state.abort.signal
+  ).then(function(){
+    if(raf){ cancelAnimationFrame(raf); raf = null; }
+    body.innerHTML = renderMd(acc);
+    state.results['__rw'] = { name:'标记式改稿', src:'dbs-script-flow', text:acc };
+    status.textContent = '完成'; status.className = 'badge done status';
+    txtBtn.disabled = false; dlBtn.disabled = false; cleanBtn.disabled = false;
+  }).catch(function(err){
+    if(raf){ cancelAnimationFrame(raf); raf = null; }
+    if(err && err.name === 'AbortError'){
+      body.innerHTML = renderMd(acc);
+      status.textContent = '已停止'; status.className = 'badge status';
+      if(acc){ txtBtn.disabled = false; dlBtn.disabled = false; cleanBtn.disabled = false; }
+      state.results['__rw'] = { name:'标记式改稿', src:'dbs-script-flow', text:acc };
+      return;
+    }
+    body.innerHTML = renderMd(acc) + '<div class="err-box">' + esc(String(err && err.message || err)) + '</div>';
+    status.textContent = '失败'; status.className = 'badge fail status';
+  });
+}
+
+/* 把标记吃掉，得到可直接使用的定稿。纯本地处理，不再调模型。 */
+function stripMarks(md){
+  var text = md;
+  // 砍掉改动清单和决断，只留正文
+  var cut = text.search(/^\s{0,3}#{1,4}\s*(改动清单|决断)\s*$/m);
+  if(cut > -1) text = text.slice(0, cut);
+  var lines = text.replace(/\r/g,'').split('\n');
+  var out = [];
+  lines.forEach(function(ln){
+    // 整行都是被删掉的原文 → 丢弃
+    if(/^\s{0,3}~~[\s\S]*~~\s*$/.test(ln.trim())) return;
+    // ⚠️ 是给作者看的元信息，不进定稿
+    if(/^\s*⚠️/.test(ln)) return;
+    // 兜底：整行只是一句括号里的删除说明（🆕（此处已删））——是元信息不是正文
+    if(/^\s*🆕\s*[（(][^）)]*(删|略去|省略|此处|原文|保留原)[^）)]*[）)]\s*$/.test(ln)) return;
+    var s = ln;
+    s = s.replace(/~~[^~]*~~/g, '');       // 行内删除线内容去掉
+    s = s.replace(/^(\s*)🆕\s*/, '$1');    // 行首 🆕 标记去掉
+    s = s.replace(/🆕\s*/g, '');           // 行内残留的 🆕
+    s = s.replace(/[ \t]+$/,'');
+    if(s.trim() === '' && ln.trim() !== '') return; // 整行被标记吃空了
+    out.push(s);
+  });
+  return out.join('\n').replace(/\n{3,}/g,'\n\n').trim();
+}
+
+function showClean(){
+  var rw = state.results['__rw'];
+  if(!rw || !rw.text){ toast('还没有改稿结果'); return; }
+  var clean = stripMarks(rw.text);
+  if(!clean){ toast('没能从改稿结果里提取出正文'); return; }
+
+  var old = document.querySelector('.rep[data-mode="__clean"]');
+  if(old) old.remove();
+
+  var card = makeCard({ id:'__clean', name:'干净版定稿', src:'本地生成 · 未调模型' });
+  $('reports').insertBefore(card, $('reports').firstChild);
+  card.querySelector('.status').remove();
+
+  var hd = card.querySelector('.rep-hd');
+  var cnt = document.createElement('span');
+  cnt.className = 'badge';
+  cnt.textContent = clean.length + ' 字（原稿 ' + $('draft').value.trim().length + ' 字）';
+  hd.appendChild(cnt);
+  hdBtn(hd, '复制 TXT', function(){ copyText(clean, '定稿已复制（' + clean.length + ' 字）'); });
+  hdBtn(hd, '下载 .txt', function(){
+    downloadTxt(clean, '定稿-' + new Date().toISOString().slice(0,10) + '.txt');
+  });
+
+  card.querySelector('.body').innerHTML =
+    '<pre style="white-space:pre-wrap;background:var(--panel-2);padding:14px;border-radius:8px;' +
+    'font-family:inherit;font-size:14px;line-height:1.85;margin:0">' + esc(clean) + '</pre>';
+  state.results['__clean'] = { name:'干净版定稿', src:'本地生成', text:clean };
+  toast('已生成干净版');
+}
+
+function collectMd(){
+  var out = ['# dbskill 审稿报告', '',
+    '- 体裁：' + $('genre').value,
+    '- 模型：' + $('model').value.trim(),
+    '- 时间：' + new Date().toLocaleString('zh-CN'),
+    '', '---', ''];
+  var order = ['__clean','__rw','__sum'].concat(MODES.map(function(m){return m.id;}));
+  order.forEach(function(id){
+    var r = state.results[id];
+    if(!r) return;
+    out.push('## ' + r.name + '（' + r.src + '）', '', r.text, '', '---', '');
+  });
+  out.push('## 原稿', '', $('draft').value.trim());
+  return out.join('\n');
+}
+
+/* ================= 绑定 ================= */
+loadCfg();
+renderModes();
+refreshKeyPill();
+
+$('apiKey').addEventListener('input', function(){ refreshKeyPill(); saveCfg(); });
+$('model').addEventListener('input', function(){ refreshKeyPill(); saveCfg(); });
+$('baseUrl').addEventListener('input', saveCfg);
+$('thinking').addEventListener('change', saveCfg);
+$('genre').addEventListener('change', saveCfg);
+$('shootType').addEventListener('change', saveCfg);
+
+$('draft').addEventListener('input', function(){
+  $('charCount').textContent = $('draft').value.trim().length + ' 字';
+});
+
+$('selAll').addEventListener('click', function(){ MODES.forEach(function(m){m.on=true;}); renderModes(); saveCfg(); });
+$('selNone').addEventListener('click', function(){ MODES.forEach(function(m){m.on=false;}); renderModes(); saveCfg(); });
+
+$('run').addEventListener('click', run);
+$('stop').addEventListener('click', function(){
+  if(state.abort) state.abort.abort();
+  state.running = false; $('stop').style.display = 'none'; updateRunHint();
+});
+$('summarize').addEventListener('click', summarize);
+$('rewrite').addEventListener('click', rewrite);
+
+$('copyMd').addEventListener('click', function(){
+  copyText(collectMd(), '已复制 Markdown');
+});
+
+$('dlHtml').addEventListener('click', function(){
+  var css = document.querySelector('style').textContent;
+  var inner = '';
+  var order = ['__clean','__rw','__sum'].concat(MODES.map(function(m){return m.id;}));
+  order.forEach(function(id){
+    var r = state.results[id];
+    if(!r) return;
+    inner += '<div class="card"><div class="card-hd"><h2>' + esc(r.name) +
+             '</h2><div class="spacer"></div><span class="badge">' + esc(r.src) +
+             '</span></div><div class="rep-bd"><div class="md-body">' + renderMd(r.text) + '</div></div></div>';
+  });
+  if(!inner){ toast('还没有可导出的报告'); return; }
+  var html = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>dbskill 审稿报告 ' + new Date().toLocaleDateString('zh-CN') + '</title>' +
+    '<style>' + css + '</style></head><body><div class="wrap" style="max-width:900px">' +
+    '<header class="top"><div class="brand"><h1>dbskill 审稿报告</h1>' +
+    '<span class="sub">' + esc($('genre').value) + ' · ' + esc($('model').value.trim()) +
+    ' · ' + new Date().toLocaleString('zh-CN') + '</span></div></header>' +
+    inner +
+    '<div class="card"><div class="card-hd"><h2>原稿</h2></div><div class="rep-bd">' +
+    '<div class="md-body"><pre style="white-space:pre-wrap">' + esc($('draft').value) + '</pre></div></div></div>' +
+    '</div></body></html>';
+  var blob = new Blob([html], { type:'text/html;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'dbskill-审稿报告-' + new Date().toISOString().slice(0,10) + '.html';
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+  toast('已导出');
+});
+
+$('clearAll').addEventListener('click', function(){
+  state.results = {};
+  $('reports').innerHTML = '';
+  $('reports').appendChild($('empty'));
+  $('empty').style.display = '';
+  $('repToolbar').style.display = 'none';
+});
+
+document.addEventListener('keydown', function(e){
+  if((e.metaKey || e.ctrlKey) && e.key === 'Enter'){ e.preventDefault(); if(!state.running) run(); }
+});
+</script>
+</body>
+</html>
