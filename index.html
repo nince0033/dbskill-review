@@ -211,7 +211,7 @@ details.think .tk{padding:0 12px 12px;font-size:12.5px;color:var(--text-2);white
   .card-bd{padding:14px}
   .row{flex-direction:column;gap:0}
   .btn{padding:11px 14px}          /* 触摸目标够大 */
-  .btn.sm{padding:9px 12px;font-size:13px}
+  .btn.sm{padding:13px 12px;font-size:13px}   /* 触摸目标 ≥44px，符合 iOS 建议 */
   .rep-bd{padding:4px 14px 16px}
   .actions{position:sticky;bottom:12px}
   .md-body table{font-size:12.5px}
@@ -273,6 +273,8 @@ details.think .tk{padding:0 12px 12px;font-size:12.5px;color:var(--text-2);white
     <div class="card">
       <div class="card-hd"><h2>稿件</h2><div class="spacer"></div>
         <span class="badge" id="charCount">0 字</span>
+        <button class="btn sm" id="pasteDraft">粘贴</button>
+        <button class="btn sm" id="clearDraft">清空</button>
       </div>
       <div class="card-bd">
         <label class="fld">
@@ -1318,8 +1320,67 @@ $('thinking').addEventListener('change', saveCfg);
 $('genre').addEventListener('change', saveCfg);
 $('shootType').addEventListener('change', saveCfg);
 
-$('draft').addEventListener('input', function(){
+/* ---------- 稿件框：粘贴 / 清空（清空可撤销，8 秒内） ---------- */
+var draftBackup = null, undoTimer = null;
+
+function updateCount(){
   $('charCount').textContent = $('draft').value.trim().length + ' 字';
+}
+function setDraft(t){ $('draft').value = t; updateCount(); }
+
+function armUndo(prev){
+  draftBackup = prev;
+  var b = $('clearDraft');
+  b.textContent = '撤销'; b.classList.add('danger');
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(disarmUndo, 8000);
+}
+function disarmUndo(){
+  draftBackup = null;
+  clearTimeout(undoTimer);
+  var b = $('clearDraft');
+  b.textContent = '清空'; b.classList.remove('danger');
+}
+
+$('draft').addEventListener('input', function(){
+  updateCount();
+  if(draftBackup !== null) disarmUndo();  // 手动改过就别再提供撤销，免得覆盖掉新输入
+});
+
+$('clearDraft').addEventListener('click', function(){
+  if(draftBackup !== null){            // 当前是「撤销」态
+    setDraft(draftBackup);
+    disarmUndo();
+    toast('已恢复');
+    return;
+  }
+  var cur = $('draft').value;
+  if(!cur.trim()){ toast('本来就是空的'); return; }
+  setDraft('');
+  armUndo(cur);
+  toast('已清空 ' + cur.trim().length + ' 字 · 8 秒内可点「撤销」找回');
+});
+
+$('pasteDraft').addEventListener('click', function(){
+  function manual(msg){
+    toast(msg);
+    $('draft').focus();
+  }
+  if(!(navigator.clipboard && navigator.clipboard.readText)){
+    manual('这个浏览器不给读剪贴板，请长按输入框手动粘贴');
+    return;
+  }
+  navigator.clipboard.readText().then(function(t){
+    if(!t || !t.trim()){ toast('剪贴板是空的'); return; }
+    var cur = $('draft').value;
+    if(cur.trim()) armUndo(cur);        // 覆盖前留一手，可撤销
+    else disarmUndo();
+    setDraft(t);
+    toast(cur.trim() ? ('已替换为剪贴板内容 ' + t.trim().length + ' 字 · 可撤销')
+                     : ('已粘贴 ' + t.trim().length + ' 字'));
+  }, function(){
+    manual('浏览器拒绝了读剪贴板，请长按输入框手动粘贴');
+  });
 });
 
 $('selAll').addEventListener('click', function(){ MODES.forEach(function(m){m.on=true;}); renderModes(); saveCfg(); });
